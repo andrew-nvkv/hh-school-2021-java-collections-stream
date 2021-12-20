@@ -5,9 +5,13 @@ import common.PersonService;
 import common.Task;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 
 /*
 Задача 1
@@ -20,8 +24,15 @@ public class Task1 implements Task {
 
   // !!! Редактируйте этот метод !!!
   private List<Person> findOrderedPersons(List<Integer> personIds) {
-    Set<Person> persons = PersonService.findPersons(personIds);
-    return Collections.emptyList();
+    // метод считает что значения уникальны, просто потому что не очень понятно что делать в случае
+    // с повторяющимися значениями (сервис работает как и положено? это особый случай?)
+    // если нужно обрабатывать неуникальные id, в итоге нельзя будет использовать хеш-карту
+    // и поиск станет медленнее
+    Map<Integer, Person> persons = PersonService.findPersons(personIds).stream()
+            .collect(Collectors.toMap(Person::getId, Function.identity()/*, (a,b) -> a */));
+    return personIds.stream()
+            .map(persons::get)
+            .collect(Collectors.toList());
   }
 
   @Override
