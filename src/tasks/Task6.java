@@ -7,9 +7,13 @@ import common.Task;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /*
 Имеются
@@ -23,7 +27,19 @@ public class Task6 implements Task {
   private Set<String> getPersonDescriptions(Collection<Person> persons,
                                             Map<Integer, Set<Integer>> personAreaIds,
                                             Collection<Area> areas) {
-    return new HashSet<>();
+    // преобразование списка объектов в хеш-таблицу для ускорения дальнейшего поиска
+    Map<Integer, String> areaId_areaName = areas.stream()
+            .collect(Collectors.toMap(Area::getId, Area::getName));
+
+    return persons.stream()
+            .flatMap(person -> personAreaIds.get(person.getId()).stream()
+                    .map(areaId -> String.format(
+                                    "%s - %s",
+                                    person.getFirstName(),
+                                    areaId_areaName.get(areaId))
+                    )
+            )
+            .collect(Collectors.toSet());
   }
 
   @Override
