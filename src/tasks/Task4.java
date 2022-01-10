@@ -19,8 +19,7 @@ FYI - DTO = Data Transfer Object - распространенный паттер
 public class Task4 implements Task {
 
   // !!! Редактируйте этот метод !!!
-  private List<ApiPersonDto> convert(List<Person> persons)
-  {
+  private List<ApiPersonDto> convert(List<Person> persons) {
     return persons.stream()
             .map(Task4::convert)
             .collect(Collectors.toList());

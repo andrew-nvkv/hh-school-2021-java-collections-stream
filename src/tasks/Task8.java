@@ -40,28 +40,21 @@ public class Task8 implements Task {
   //ну и различные имена тоже хочется
   public Set<String> getDifferentNames(List<Person> persons) {
     // distinct здесь не нужен, так как все равно пишем во множество
-    // стрим тоже не нужен, можно обойтись стандартный конструктором (даже IDEA это подсказывает)
-    return new HashSet<String>(getNames(persons));
+    // стрим тоже не нужен, можно обойтись стандартным конструктором (даже IDEA это подсказывает)
+    return new HashSet<>(getNames(persons));
   }
 
   //Для фронтов выдадим полное имя, а то сами не могут
   static public String convertPersonToString(Person person) {
     // getSecondName запрашивалось дважды
     // неровно склеивались строки
-    // переписано в функциональном стиле
 
-    // Reference:
-    // https://stackoverflow.com/questions/46987666/java-8-store-lambdas-in-list
-    // https://stackoverflow.com/questions/2752192/array-of-function-pointers-in-java
-
-      List<Supplier<String>> transformers = List.of(
-              () -> person.getSecondName(),
-              () -> person.getFirstName(),
-              () -> person.getMiddleName()
-      );
-      return transformers.stream()
-              .map(v -> v.get())
-              .filter(v -> v != null)
+      return Stream.of(
+                      person.getSecondName(),
+                      person.getFirstName(),
+                      person.getMiddleName()
+              )
+              .filter(Objects::nonNull)   // тут тоже увидел что можно заменить на стандартный метод
               .collect(Collectors.joining(" "));
   }
 
@@ -79,12 +72,8 @@ public class Task8 implements Task {
   public boolean hasSamePersons(Collection<Person> persons1, Collection<Person> persons2) {
     // тут стримы не нужны, просто использование стандартных методов интерфейса Collection
     // в изначальном методе не было раннего прерывания метода, когда совпадение уже найдено
-    for (Person person : persons1) {
-      if (persons2.contains(person)) {
-        return true;
-      }
-    }
-    return false;
+    return persons2.stream()
+            .anyMatch(new HashSet<Person>(persons1)::contains);
   }
 
   //...
