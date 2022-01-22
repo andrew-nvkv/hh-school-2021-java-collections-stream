@@ -3,12 +3,10 @@ package tasks;
 import common.Person;
 import common.Task;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.time.Instant;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -21,76 +19,103 @@ import java.util.stream.Stream;
 P.S. функции тут разные и рабочие (наверное), но вот их понятность и эффективность страдает (аж пришлось писать комменты)
 P.P.S Здесь ваши правки желательно прокомментировать (можно на гитхабе в пулл реквесте)
  */
+
 public class Task8 implements Task {
 
   private long count;
 
   //Не хотим выдывать апи нашу фальшивую персону, поэтому конвертим начиная со второй
   public List<String> getNames(List<Person> persons) {
-    if (persons.size() == 0) {
+    // если нужно пропустить один элемент, то при размере массива 1 тоже ничего не возвращаем
+    if (persons.size() <= 1) {
       return Collections.emptyList();
     }
-    persons.remove(0);
-    return persons.stream().map(Person::getFirstName).collect(Collectors.toList());
+    return persons.stream()
+            // дешевле пропустить один элемент чем удалять (мы заранее не знаем какой именно это список на входе)
+            .skip(1)
+            .map(Person::getFirstName)
+            .collect(Collectors.toList());
   }
 
   //ну и различные имена тоже хочется
   public Set<String> getDifferentNames(List<Person> persons) {
-    return getNames(persons).stream().distinct().collect(Collectors.toSet());
+    // distinct здесь не нужен, так как все равно пишем во множество
+    // стрим тоже не нужен, можно обойтись стандартным конструктором (даже IDEA это подсказывает)
+    return new HashSet<>(getNames(persons));
   }
 
   //Для фронтов выдадим полное имя, а то сами не могут
-  public String convertPersonToString(Person person) {
-    String result = "";
-    if (person.getSecondName() != null) {
-      result += person.getSecondName();
-    }
+  static public String convertPersonToString(Person person) {
+    // getSecondName запрашивалось дважды
+    // неровно склеивались строки
 
-    if (person.getFirstName() != null) {
-      result += " " + person.getFirstName();
-    }
-
-    if (person.getSecondName() != null) {
-      result += " " + person.getSecondName();
-    }
-    return result;
+      return Stream.of(
+                      person.getSecondName(),
+                      person.getFirstName(),
+                      person.getMiddleName()
+              )
+              .filter(Objects::nonNull)   // тут тоже увидел что можно заменить на стандартный метод
+              .collect(Collectors.joining(" "));
   }
 
   // словарь id персоны -> ее имя
   public Map<Integer, String> getPersonNames(Collection<Person> persons) {
-    Map<Integer, String> map = new HashMap<>(1);
-    for (Person person : persons) {
-      if (!map.containsKey(person.getId())) {
-        map.put(person.getId(), convertPersonToString(person));
-      }
-    }
-    return map;
+    return persons.stream()
+            .collect(Collectors.toMap(
+                    Person::getId,
+                    Task8::convertPersonToString,
+                    (a, b) -> a)
+            );
   }
 
   // есть ли совпадающие в двух коллекциях персоны?
   public boolean hasSamePersons(Collection<Person> persons1, Collection<Person> persons2) {
-    boolean has = false;
-    for (Person person1 : persons1) {
-      for (Person person2 : persons2) {
-        if (person1.equals(person2)) {
-          has = true;
-        }
-      }
-    }
-    return has;
+    // тут стримы не нужны, просто использование стандартных методов интерфейса Collection
+    // в изначальном методе не было раннего прерывания метода, когда совпадение уже найдено
+    return persons2.stream()
+            .anyMatch(new HashSet<Person>(persons1)::contains);
   }
 
   //...
   public long countEven(Stream<Integer> numbers) {
-    count = 0;
-    numbers.filter(num -> num % 2 == 0).forEach(num -> count++);
-    return count;
+    return numbers.filter(v -> v % 2 == 0).count();
   }
 
   @Override
   public boolean check() {
+
+    List<Person> persons1 = List.of(
+            new Person(0, "test", Instant.now()),
+            new Person(1, "Name1", "MiddleName1", "LastName1", Instant.now()),
+            new Person(2, "Name2", "MiddleName2", Instant.now()),
+            new Person(3, "NameSame", Instant.now()),
+            new Person(4, "NameSame", Instant.now()),
+            new Person(6, "Name4", "MiddleName4", "LastName4", Instant.now())
+    );
+    List<Person> persons2 = List.of(
+            new Person(2, "Name2", "MiddleName2", Instant.now()),
+            new Person(10, "Name2", "MiddleName2", Instant.now()),
+            new Person(11, "Name8", "MiddleName8", Instant.now())
+    );
+    List<Person> persons3 = List.of(
+            new Person(10, "Name2", "MiddleName2", Instant.now()),
+            new Person(11, "Name8", "MiddleName8", Instant.now()),
+            new Person(12, "Name9", "MiddleName9", Instant.now())
+    );
+
+//    System.out.println(getNames(persons1));
+//    System.out.println(getDifferentNames(persons1));
+//    System.out.println(convertPersonToString(persons1.get(1)));
+//    System.out.println(convertPersonToString(persons1.get(2)));
+//    System.out.println(convertPersonToString(persons1.get(3)));
+//    System.out.println(getPersonNames(persons1));
+//    System.out.println(hasSamePersons(persons1, persons2));   // true
+//    System.out.println(hasSamePersons(persons1, persons3));   // false
+//    System.out.println(countEven(List.of(1,2,3,4,5,6,7,8).stream()));
+//    System.out.println(countEven(List.of(1,2,3,4,5,6,7).stream()));
+
     System.out.println("Слабо дойти до сюда и исправить Fail этой таски?");
-    boolean codeSmellsGood = false;
+    boolean codeSmellsGood = true;
     boolean reviewerDrunk = false;
     return codeSmellsGood || reviewerDrunk;
   }
